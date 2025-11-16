@@ -10,13 +10,13 @@ const pizzaSlides = [
     title: "QUATTRO FORMAGGI",
     price: "$16.99",
     image:
-      "https://images.unsplash.com/photo-1601924582971-dfef8f3513f3?auto=format&fit=crop&w=800&q=80",
+      "https://images.unsplash.com/photo-1590947132387-155cc02f3212?auto=format&fit=crop&w=800&q=80",
   },
   {
     title: "DIAVOLA",
     price: "$15.99",
     image:
-      "https://images.unsplash.com/photo-1541745537411-b8046dc6d66c?auto=format&fit=crop&w=800&q=80",
+      "https://images.unsplash.com/photo-1604068549290-dea0e4a305ca?auto=format&fit=crop&w=800&q=80",
   },
   {
     title: "PEPPERONI",
