@@ -60,6 +60,11 @@ function formatTime(date) {
 
 // ===== Рендер верхней части (маршрут + времена) =====
 
+function formatArrival(minutes) {
+  if (minutes === 0) return "Now";
+  return minutes;
+}
+
 function renderBusHeader() {
   const routeLabel = document.getElementById("route-label");
   const timesRoot = document.getElementById("arrival-times");
@@ -74,7 +79,7 @@ function renderBusHeader() {
   times.forEach((t, i) => {
     const span = document.createElement("span");
     span.className = "time" + (i === 0 ? " primary" : "");
-    span.textContent = t;
+    span.textContent = formatArrival(t);
     timesRoot.appendChild(span);
 
     if (i < times.length - 1) {
