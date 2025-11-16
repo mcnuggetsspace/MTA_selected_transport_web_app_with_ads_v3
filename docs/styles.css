@@ -22,7 +22,12 @@ body {
     sans-serif;
 }
 
+.page {
+  /* просто контейнер, если захочешь добавить отступы */
+}
+
 /* Контейнер, который будет поворачивать контент */
+
 .rotate-wrapper {
   width: 960px;
   height: 540px;
@@ -35,22 +40,11 @@ body {
   align-items: center;
 }
 
-.page {
-  /* просто контейнер, чтобы можно было добавить отступы, если надо */
-}
+/* Сам экран 540x960, фиксированный размер */
 
-/* Сам экран теперь 540x960, как и нужно */
 .bus-screen {
   width: 540px;
   height: 960px;
-  transform: translateY(-210px); /* компенсация после rotate */
-}
-
-/* OLD: Сам экран 540x960, всегда фиксированный размер 
-
-.bus-screen {
-  width: 540px;   /* горизонталь */
-  height: 960px;  /* вертикаль */
   background: #000000;
   border-radius: 26px;
   overflow: hidden;
@@ -60,7 +54,6 @@ body {
   display: flex;
   flex-direction: column;
 }
-*/
 
 /* Верхние 25% */
 
