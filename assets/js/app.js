@@ -4,7 +4,7 @@ const CONFIG_STORAGE_KEY = "mtaBoardConfig";
 
 const defaultConfig = {
   workerUrl: "/api/stop-monitoring", // Cloudflare Pages Function на том же домене
-  stopId: "300432",
+  stopId: "MTA_300432",
   routeId: "B82",
   refreshSeconds: 30,
   maxArrivals: 3,
