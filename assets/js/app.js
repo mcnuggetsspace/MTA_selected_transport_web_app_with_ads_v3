@@ -1,11 +1,11 @@
-// ===== Конфигурация борда (сохраняется в localStorage) =====
+// ===== Конфигурация борда (localStorage) =====
 
 const CONFIG_STORAGE_KEY = "mtaBoardConfig";
 
 const defaultConfig = {
-  workerUrl: "/api/stop-monitoring", // Cloudflare Pages Function на том же домене
-  stopId: "MTA_300432",
-  routeId: "B82",
+  workerUrl: "/api/stop-monitoring", // Pages Function
+  stopId: "300432",                  // можно так или MTA_300432
+  routeId: "B82",                    // только для дефолтной надписи
   refreshSeconds: 30,
   maxArrivals: 3,
 };
@@ -27,14 +27,72 @@ function saveConfig(cfg) {
 
 let config = loadConfig();
 
-// ===== Конфиг одного экрана — берём bus и times из config/данных MTA =====
+// ===== Состояние для вывода на экран =====
 
-let screenConfig = {
-  bus: config.routeId,
-  times: [4, 7, 22], // стартовые заглушки
+// то, что реально рисуем сейчас
+const screenConfig = {
+  bus: config.routeId || "BUS",
+  times: [4, 7, 22],
 };
 
-// Пицца-слайды (оставил примерными)
+// сюда будем класть все маршруты на остановке
+let lineRotationOrder = [];          // например ["B6", "B82"]
+let arrivalsByLine = {};             // { "B6": [10, 35, 55], "B82": [3, 5, 24] }
+let currentLineIndex = 0;
+
+// интервал переключения маршрутов (10 сек)
+const LINE_ROTATION_INTERVAL_MS = 10_000;
+let lineRotationTimer = null;
+
+// интервал обновления данных с MTA
+let refreshTimer = null;
+
+// ===== Утилиты =====
+
+function formatTime(date) {
+  let h = date.getHours();
+  const m = date.getMinutes().toString().padStart(2, "0");
+  const suffix = h >= 12 ? "PM" : "AM";
+  h = h % 12;
+  if (h === 0) h = 12;
+  return `${h.toString().padStart(2, "0")}:${m} ${suffix}`;
+}
+
+// ===== Рендер верхней части (маршрут + времена) =====
+
+function renderBusHeader() {
+  const routeLabel = document.getElementById("route-label");
+  const timesRoot = document.getElementById("arrival-times");
+
+  if (!routeLabel || !timesRoot) return;
+
+  routeLabel.textContent = screenConfig.bus || config.routeId || "BUS";
+  timesRoot.innerHTML = "";
+
+  const times = screenConfig.times.slice(0, config.maxArrivals);
+
+  times.forEach((t, i) => {
+    const span = document.createElement("span");
+    span.className = "time" + (i === 0 ? " primary" : "");
+    span.textContent = t;
+    timesRoot.appendChild(span);
+
+    if (i < times.length - 1) {
+      const slash = document.createElement("span");
+      slash.className = "slash";
+      slash.textContent = "/";
+      timesRoot.appendChild(slash);
+    }
+  });
+
+  const min = document.createElement("span");
+  min.className = "min-label";
+  min.textContent = "min";
+  timesRoot.appendChild(min);
+}
+
+// ===== Пицца-слайдер (как было) =====
+
 const pizzaSlides = [
   {
     title: "QUATTRO FORMAGGI",
@@ -61,52 +119,6 @@ const pizzaSlides = [
       "https://images.unsplash.com/photo-1590947132387-155cc02f3212?auto=format&fit=crop&w=800&q=80",
   },
 ];
-
-// ===== Форматирование времени для часов =====
-
-function formatTime(date) {
-  let h = date.getHours();
-  const m = date.getMinutes().toString().padStart(2, "0");
-  const suffix = h >= 12 ? "PM" : "AM";
-  h = h % 12;
-  if (h === 0) h = 12;
-  return `${h.toString().padStart(2, "0")}:${m} ${suffix}`;
-}
-
-// ===== Рендер шапки автобуса на основе screenConfig =====
-
-function renderBusHeader() {
-  const routeLabel = document.getElementById("route-label");
-  const timesRoot = document.getElementById("arrival-times");
-
-  if (!routeLabel || !timesRoot) return;
-
-  routeLabel.textContent = screenConfig.bus;
-  timesRoot.innerHTML = "";
-
-  const times = screenConfig.times.slice(0, config.maxArrivals);
-
-  times.forEach((t, i) => {
-    const span = document.createElement("span");
-    span.className = "time" + (i === 0 ? " primary" : "");
-    span.textContent = t;
-    timesRoot.appendChild(span);
-
-    if (i < times.length - 1) {
-      const slash = document.createElement("span");
-      slash.className = "slash";
-      slash.textContent = "/";
-      timesRoot.appendChild(slash);
-    }
-  });
-
-  const min = document.createElement("span");
-  min.className = "min-label";
-  min.textContent = "min";
-  timesRoot.appendChild(min);
-}
-
-// ===== Пицца-слайдер =====
 
 function initPizzaSlideshow() {
   const imgEl = document.getElementById("pizza-image");
@@ -153,56 +165,122 @@ function initClock() {
   setInterval(tick, 1000);
 }
 
-// ===== Работа с MTA через Cloudflare Worker =====
+// ===== Парсинг ответа Siri: группируем по маршрутам =====
 
-// Пример парсера для Siri VehicleMonitoringDelivery.
-// ВАЖНО: при необходимости подправь под точный ответ твоего Worker'а.
-function extractArrivalMinutesFromSiri(json) {
+/**
+ * Возвращает Map: { "B6" -> [10, 35, 55], "B82" -> [3, 5, 24], ... }
+ */
+function extractArrivalsByLine(json) {
+  const result = new Map();
+
   try {
     const deliveries =
-      json?.Siri?.ServiceDelivery?.VehicleMonitoringDelivery ||
-      json?.Siri?.ServiceDelivery?.StopMonitoringDelivery ||
-      [];
-
-    const visits =
-      deliveries[0]?.VehicleActivity ||
-      deliveries[0]?.MonitoredStopVisit ||
-      [];
-
+      json?.Siri?.ServiceDelivery?.StopMonitoringDelivery || [];
+    const visits = deliveries[0]?.MonitoredStopVisit || [];
     const now = Date.now();
 
-    const diffs = visits
-      .map((v) => {
-        // Несколько возможных путей, чтобы ты подстроил под свой ответ
-        const mvj = v.MonitoredVehicleJourney || v.MonitoredStopVisit?.MonitoredVehicleJourney;
-        const call = mvj?.MonitoredCall || mvj?.OnwardCalls?.OnwardCall?.[0];
-        const timeStr =
-          call?.ExpectedArrivalTime ||
-          call?.ExpectedDepartureTime ||
-          mvj?.RecordedAtTime;
+    visits.forEach((v) => {
+      const mvj = v.MonitoredVehicleJourney;
+      if (!mvj) return;
 
-        if (!timeStr) return null;
+      // Имя маршрута: PublishedLineName[0] или очищенный LineRef
+      let lineName = null;
 
-        const ts = Date.parse(timeStr);
-        if (Number.isNaN(ts)) return null;
+      if (Array.isArray(mvj.PublishedLineName) && mvj.PublishedLineName[0]) {
+        lineName = String(mvj.PublishedLineName[0]);
+      } else if (typeof mvj.PublishedLineName === "string") {
+        lineName = mvj.PublishedLineName;
+      } else if (typeof mvj.LineRef === "string") {
+        // "MTA NYCT_B6" -> "B6"
+        const parts = mvj.LineRef.split("_");
+        lineName = parts[parts.length - 1];
+      }
 
-        const diffMin = Math.round((ts - now) / 60000);
-        return diffMin;
-      })
-      .filter((m) => m !== null && m >= 0)
-      .sort((a, b) => a - b);
+      if (!lineName) {
+        return;
+      }
 
-    return diffs;
+      const call = mvj.MonitoredCall;
+      if (!call) return;
+
+      const timeStr =
+        call.ExpectedArrivalTime ||
+        call.ExpectedDepartureTime ||
+        call.AimedArrivalTime;
+
+      if (!timeStr) return;
+
+      const ts = Date.parse(timeStr);
+      if (Number.isNaN(ts)) return;
+
+      const diffMin = Math.round((ts - now) / 60000);
+      if (diffMin < 0) return; // уже уехал
+
+      if (!result.has(lineName)) {
+        result.set(lineName, []);
+      }
+      result.get(lineName).push(diffMin);
+    });
+
+    // сортируем и обрезаем по maxArrivals
+    result.forEach((arr, key) => {
+      arr.sort((a, b) => a - b);
+      result.set(key, arr.slice(0, config.maxArrivals));
+    });
   } catch (e) {
-    console.error("Failed to parse Siri JSON", e);
-    return [];
+    console.error("Failed to parse Siri JSON by line", e);
   }
+
+  return result;
 }
 
-let refreshTimer = null;
+// ===== Обновление глобального состояния маршрутов и запуск рендера =====
+
+function updateLinesFromFetch(byLineMap) {
+  if (!byLineMap || byLineMap.size === 0) {
+    console.warn("No arrivals parsed from Siri JSON");
+    return;
+  }
+
+  arrivalsByLine = {};
+  lineRotationOrder = [];
+
+  byLineMap.forEach((minutes, line) => {
+    arrivalsByLine[line] = minutes;
+    lineRotationOrder.push(line);
+  });
+
+  // Например можно отсортировать по ближайшему приходу
+  lineRotationOrder.sort((a, b) => {
+    const aMin = arrivalsByLine[a]?.[0] ?? Infinity;
+    const bMin = arrivalsByLine[b]?.[0] ?? Infinity;
+    return aMin - bMin;
+  });
+
+  // Если индекс вылез — вернёмся к началу
+  if (currentLineIndex >= lineRotationOrder.length) {
+    currentLineIndex = 0;
+  }
+
+  // Перерисуем текущий маршрут
+  renderCurrentLine();
+}
+
+function renderCurrentLine() {
+  if (!lineRotationOrder.length) return;
+
+  const line = lineRotationOrder[currentLineIndex];
+  const minutes = arrivalsByLine[line] || [];
+
+  screenConfig.bus = line;
+  screenConfig.times = minutes.length ? minutes : [4, 7, 22]; // fallback
+  renderBusHeader();
+}
+
+// ===== Fetch к Pages Function =====
 
 async function fetchAndUpdateArrivals() {
-  if (!config.workerUrl || !config.stopId || !config.routeId) {
+  if (!config.workerUrl || !config.stopId) {
     console.warn("Config is incomplete; skip fetch");
     return;
   }
@@ -210,7 +288,7 @@ async function fetchAndUpdateArrivals() {
   const url = new URL(config.workerUrl, window.location.origin);
   url.searchParams.set("stopCode", config.stopId);
   url.searchParams.set("maxVisits", config.maxArrivals);
-  //url.searchParams.set("LineRef", config.routeId); // ВАЖНО: пока НЕ отправляем LineRef, чтобы не ломать MTA
+  // НЕ отправляем LineRef, MTA его ломает для некоторых остановок
 
   try {
     const res = await fetch(url.toString(), { cache: "no-store" });
@@ -220,19 +298,14 @@ async function fetchAndUpdateArrivals() {
     }
 
     const data = await res.json();
-    const arrivals = extractArrivalMinutesFromSiri(data);
-
-    if (arrivals.length > 0) {
-      screenConfig.bus = config.routeId;
-      screenConfig.times = arrivals.slice(0, config.maxArrivals);
-      renderBusHeader();
-    } else {
-      console.warn("No arrivals parsed from Siri JSON");
-    }
+    const byLine = extractArrivalsByLine(data);
+    updateLinesFromFetch(byLine);
   } catch (err) {
     console.error("Error while fetching arrivals", err);
   }
 }
+
+// ===== Планировщик обновления с MTA =====
 
 function scheduleRefresh() {
   if (refreshTimer) {
@@ -242,6 +315,28 @@ function scheduleRefresh() {
 
   const ms = Math.max(5, config.refreshSeconds) * 1000;
   refreshTimer = setInterval(fetchAndUpdateArrivals, ms);
+}
+
+// ===== Ротация маршрутов каждые 10 секунд =====
+
+function initLineRotation() {
+  if (lineRotationTimer) {
+    clearInterval(lineRotationTimer);
+    lineRotationTimer = null;
+  }
+
+  lineRotationTimer = setInterval(() => {
+    if (!lineRotationOrder.length) return;
+
+    // если всего один маршрут - просто остаёмся на нём
+    if (lineRotationOrder.length === 1) {
+      renderCurrentLine();
+      return;
+    }
+
+    currentLineIndex = (currentLineIndex + 1) % lineRotationOrder.length;
+    renderCurrentLine();
+  }, LINE_ROTATION_INTERVAL_MS);
 }
 
 // ===== UI настроек =====
@@ -285,14 +380,16 @@ function initSettingsUI() {
       workerUrl: form.workerUrl.value.trim(),
       stopId: form.stopId.value.trim(),
       routeId: form.routeId.value.trim(),
-      refreshSeconds: Number(form.refreshSeconds.value) || defaultConfig.refreshSeconds,
-      maxArrivals: Number(form.maxArrivals.value) || defaultConfig.maxArrivals,
+      refreshSeconds:
+        Number(form.refreshSeconds.value) || defaultConfig.refreshSeconds,
+      maxArrivals:
+        Number(form.maxArrivals.value) || defaultConfig.maxArrivals,
     };
 
     config = newCfg;
     saveConfig(config);
 
-    // Обновляем экран и расписание обновления
+    // обновим экран и расписание
     screenConfig.bus = config.routeId;
     renderBusHeader();
     fetchAndUpdateArrivals();
@@ -319,6 +416,7 @@ function init() {
   initSettingsUI();
   fetchAndUpdateArrivals();
   scheduleRefresh();
+  initLineRotation(); // запускаем ротацию маршрутов каждые 10 секунд
 }
 
 document.addEventListener("DOMContentLoaded", init);
