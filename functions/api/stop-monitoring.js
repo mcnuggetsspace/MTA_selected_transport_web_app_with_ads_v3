@@ -27,7 +27,12 @@ export async function onRequest({ request, env }) {
   const targetParams = new URLSearchParams();
 
   const stopCode = requestParams.get('stopCode')?.trim();
+  const monitoringRef = requestParams.get('MonitoringRef')?.trim();
+  const normalizedMonitoringRef = monitoringRef || stopCode || '';
+
   const maxVisits = requestParams.get('maxVisits')?.trim();
+  const maximumStopVisits = requestParams.get('MaximumStopVisits')?.trim();
+  const normalizedMaxVisits = maximumStopVisits || maxVisits || '';
 
   for (const [key, value] of requestParams.entries()) {
     const trimmedValue = value.trim();
@@ -38,10 +43,12 @@ export async function onRequest({ request, env }) {
 
     switch (key) {
       case 'stopCode':
-        targetParams.set('MonitoringRef', trimmedValue);
+      case 'MonitoringRef':
+        targetParams.set('MonitoringRef', normalizedMonitoringRef || trimmedValue);
         break;
       case 'maxVisits':
-        targetParams.set('MaximumStopVisits', trimmedValue);
+      case 'MaximumStopVisits':
+        targetParams.set('MaximumStopVisits', normalizedMaxVisits || trimmedValue);
         break;
       case 'key':
         // Ignore user-supplied API keys in production; the Worker injects its own secret.
@@ -52,12 +59,12 @@ export async function onRequest({ request, env }) {
     }
   }
 
-  if (!targetParams.has('MonitoringRef') && stopCode) {
-    targetParams.set('MonitoringRef', stopCode);
+  if (!targetParams.has('MonitoringRef') && normalizedMonitoringRef) {
+    targetParams.set('MonitoringRef', normalizedMonitoringRef);
   }
 
-  if (!targetParams.has('MaximumStopVisits') && maxVisits) {
-    targetParams.set('MaximumStopVisits', maxVisits);
+  if (!targetParams.has('MaximumStopVisits') && normalizedMaxVisits) {
+    targetParams.set('MaximumStopVisits', normalizedMaxVisits);
   }
 
   if (!targetParams.has('OperatorRef')) {
@@ -69,6 +76,7 @@ export async function onRequest({ request, env }) {
   }
 
   if (env?.MTA_API_KEY) {
+    // Добавь секрет MTA_API_KEY в Cloudflare Pages → Settings → Functions → Environment variables / Secrets
     targetParams.set('key', env.MTA_API_KEY);
   }
 

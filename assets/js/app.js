@@ -3,7 +3,7 @@
 const CONFIG_STORAGE_KEY = "mtaBoardConfig";
 
 const defaultConfig = {
-  workerUrl: "https://your-worker.yourname.workers.dev/siri", // поменяй на свой
+  workerUrl: "/api/stop-monitoring", // Cloudflare Pages Function на том же домене
   stopId: "MTA_308209",
   routeId: "B82",
   refreshSeconds: 30,
@@ -207,8 +207,9 @@ async function fetchAndUpdateArrivals() {
     return;
   }
 
-  const url = new URL(config.workerUrl);
-  url.searchParams.set("MonitoringRef", config.stopId);
+  const url = new URL(config.workerUrl, window.location.origin);
+  url.searchParams.set("stopCode", config.stopId);
+  url.searchParams.set("maxVisits", config.maxArrivals);
   url.searchParams.set("LineRef", config.routeId);
 
   try {
