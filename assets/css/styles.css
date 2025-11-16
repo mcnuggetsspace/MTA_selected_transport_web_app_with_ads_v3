@@ -124,13 +124,13 @@ body {
 }
 
 .arrival-times .time {
-  font-weight: 600;
-  font-size: 22px;
+  font-weight: 700;
+  font-size: 32px; /* единый размер для всех минут */
 }
 
 .arrival-times .time.primary {
-  font-weight: 800;
-  font-size: 26px;
+  font-weight: 800;  /* можно оставить более жирным */
+  font-size: 32px;   /* тот же размер, чтобы не прыгала высота */
 }
 
 .arrival-times .slash {
