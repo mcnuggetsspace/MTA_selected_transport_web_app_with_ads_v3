@@ -210,7 +210,7 @@ async function fetchAndUpdateArrivals() {
   const url = new URL(config.workerUrl, window.location.origin);
   url.searchParams.set("stopCode", config.stopId);
   url.searchParams.set("maxVisits", config.maxArrivals);
-  url.searchParams.set("LineRef", config.routeId);
+  //url.searchParams.set("LineRef", config.routeId); // ВАЖНО: пока НЕ отправляем LineRef, чтобы не ломать MTA
 
   try {
     const res = await fetch(url.toString(), { cache: "no-store" });
