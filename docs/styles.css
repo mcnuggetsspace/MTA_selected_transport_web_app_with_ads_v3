@@ -29,8 +29,8 @@ body {
 /* Контейнер, который будет поворачивать контент */
 
 .rotate-wrapper {
-  width: 960px;
-  height: 540px;
+  width: 540px;   /* ДОЛЖНО совпадать с шириной экрана */
+  height: 960px;  /* И с высотой экрана */
   overflow: hidden;
   position: relative;
   transform: rotate(90deg);
