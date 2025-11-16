@@ -66,12 +66,15 @@ function formatArrival(minutes) {
 }
 
 function renderBusHeader() {
-  const routeLabel = document.getElementById("route-label");
   const timesRoot = document.getElementById("arrival-times");
+  const routeTextEl = document.querySelector(".route-text");
 
-  if (!routeLabel || !timesRoot) return;
+  if (!timesRoot) return;
 
-  routeLabel.textContent = screenConfig.bus || config.routeId || "BUS";
+  if (routeTextEl) {
+    routeTextEl.textContent = screenConfig.bus || config.routeId || "BUS";
+  }
+
   timesRoot.innerHTML = "";
 
   const times = screenConfig.times.slice(0, config.maxArrivals);
