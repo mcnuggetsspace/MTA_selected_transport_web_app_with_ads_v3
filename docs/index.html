@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <title>Bus Pizza Board</title>
@@ -7,52 +8,49 @@
   <link rel="stylesheet" href="styles.css" />
   <script src="script.js" defer></script>
 </head>
+
 <body>
   <main class="page">
     <div class="rotate-wrapper">
-    <section class="bus-screen">
-      <!-- Верхние 25%: маршрут и времена -->
-      <header class="screen-top">
-        <div class="route-label" id="route-label">B82</div>
-        <div class="arrival-times" id="arrival-times"></div>
-      </header>
+      <section class="bus-screen">
+        <!-- Верхние 25%: маршрут и времена -->
+        <header class="screen-top">
+          <div class="route-label" id="route-label">B82</div>
+          <div class="arrival-times" id="arrival-times"></div>
+        </header>
 
-      <!-- Средние ~65%: фото пиццы + название + цена -->
-      <div class="screen-middle">
-        <div class="pizza-wrapper">
-          <img
-            class="pizza-image"
-            id="pizza-image"
-            src=""
-            alt="Pizza"
-          />
-          <div class="pizza-overlay">
-            <div class="pizza-title" id="pizza-title"></div>
-            <div class="pizza-price" id="pizza-price"></div>
+        <!-- Средние ~65%: фото пиццы + название + цена -->
+        <div class="screen-middle">
+          <div class="pizza-wrapper">
+            <img class="pizza-image" id="pizza-image" src="" alt="Pizza" />
+            <div class="pizza-overlay">
+              <div class="pizza-title" id="pizza-title"></div>
+              <div class="pizza-price" id="pizza-price"></div>
+            </div>
+          </div>
+
+          <div class="dots">
+            <span class="dot"></span>
+            <span class="dot"></span>
+            <span class="dot"></span>
+            <span class="dot"></span>
           </div>
         </div>
 
-        <div class="dots">
-          <span class="dot"></span>
-          <span class="dot"></span>
-          <span class="dot"></span>
-          <span class="dot"></span>
-        </div>
-      </div>
+        <!-- Нижние 10%: QR + Order Online + время -->
+        <footer class="screen-bottom">
+          <div class="qr-box">
+            <!-- сюда можешь положить свой настоящий QR -->
+            <img src="assets/qr-placeholder.png" alt="QR code" class="qr-img" />
+          </div>
 
-      <!-- Нижние 10%: QR + Order Online + время -->
-      <footer class="screen-bottom">
-        <div class="qr-box">
-          <!-- сюда можешь положить свой настоящий QR -->
-          <img src="assets/qr-placeholder.png" alt="QR code" class="qr-img" />
-        </div>
+          <div class="order-text">Order Online</div>
 
-        <div class="order-text">Order Online</div>
-
-        <div class="time-box" id="clock">03:12 AM</div>
-      </footer>
-    </section>
-    </div>  
+          <div class="time-box" id="clock">03:12 AM</div>
+        </footer>
+      </section>
+    </div>
   </main>
 </body>
+
 </html>
