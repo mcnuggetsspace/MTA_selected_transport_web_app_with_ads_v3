@@ -1,0 +1,349 @@
+/* Базовые настройки — без скроллов */
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden; /* ни вертикального, ни горизонтального скролла */
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #101010;
+  color: #ffffff;
+  font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial,
+    sans-serif;
+}
+
+.page {
+  position: relative;
+}
+
+/* Кнопка настроек (снаружи, не повёрнута) */
+
+.settings-button {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 20;
+  padding: 6px 10px 6px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: rgba(0, 0, 0, 0.6);
+  color: #f9fafb;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+}
+
+/* Контейнер, который поворачивает контент */
+
+.rotate-wrapper {
+  width: 540px;
+  height: 960px;
+  overflow: hidden;
+  position: relative;
+  transform: rotate(90deg);
+  transform-origin: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Сам экран 540x960, фиксированный размер */
+
+.bus-screen {
+  width: 540px;
+  height: 960px;
+  background: #000000;
+  border-radius: 26px;
+  overflow: hidden;
+  box-shadow:
+    0 24px 60px rgba(0, 0, 0, 0.9),
+    0 0 0 1px rgba(255, 255, 255, 0.06);
+  display: flex;
+  flex-direction: column;
+}
+
+/* Верхние 25% */
+
+.screen-top {
+  flex: 0 0 25%;
+  padding: 16px 22px;
+  background: radial-gradient(circle at top left, #1f3440, #05070b 60%);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid rgba(0, 255, 255, 0.25);
+}
+
+.route-label {
+  background: #ffffff;
+  color: #000000;
+  padding: 10px 18px;
+  border-radius: 14px;
+  font-weight: 900;
+  font-size: 32px;
+  letter-spacing: 0.12em;
+}
+
+.arrival-times {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  color: #f8fafc;
+  font-feature-settings: "tnum" 1, "lnum" 1;
+}
+
+.arrival-times .time {
+  font-weight: 600;
+  font-size: 22px;
+}
+
+.arrival-times .time.primary {
+  font-weight: 800;
+  font-size: 26px;
+}
+
+.arrival-times .slash {
+  opacity: 0.6;
+  font-size: 20px;
+}
+
+.arrival-times .min-label {
+  margin-left: 4px;
+  font-size: 16px;
+  opacity: 0.9;
+}
+
+/* Средние ~65% */
+
+.screen-middle {
+  flex: 0 0 65%;
+  position: relative;
+  background: radial-gradient(circle at top, #222222, #020202 60%);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 14px 14px 18px;
+}
+
+.pizza-wrapper {
+  position: relative;
+  flex: 1;
+  border-radius: 22px;
+  overflow: hidden;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.pizza-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transform: scale(1.02);
+}
+
+.pizza-overlay {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 20px 24px 18px;
+  text-align: center;
+  background: linear-gradient(
+    to top,
+    rgba(0, 0, 0, 0.9),
+    rgba(0, 0, 0, 0.3),
+    transparent
+  );
+}
+
+.pizza-title {
+  font-size: 22px;
+  letter-spacing: 0.2em;
+  margin-bottom: 6px;
+}
+
+.pizza-price {
+  font-size: 24px;
+  font-weight: 800;
+}
+
+.dots {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.3);
+  transition: all 0.2s ease;
+}
+
+.dot.active {
+  width: 14px;
+  background: #ffffff;
+}
+
+/* Нижние 10% */
+
+.screen-bottom {
+  flex: 0 0 10%;
+  display: flex;
+  align-items: center;
+  padding: 10px 16px 12px;
+  gap: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  background: radial-gradient(circle at bottom, #050608, #000000);
+  font-size: 16px;
+}
+
+.qr-box {
+  width: 46px;
+  height: 46px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.qr-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.order-text {
+  flex: 1;
+  text-align: center;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+}
+
+.time-box {
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.06);
+  font-feature-settings: "tnum" 1, "lnum" 1;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+/* === Оверлей настроек === */
+
+.settings-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 50;
+}
+
+.settings-overlay.hidden {
+  display: none;
+}
+
+.settings-panel {
+  width: 360px;
+  max-width: 90vw;
+  border-radius: 16px;
+  background: #020617;
+  border: 1px solid rgba(148, 163, 184, 0.5);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.9);
+  padding: 16px 18px 18px;
+  color: #e5e7eb;
+}
+
+.settings-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.settings-header h2 {
+  font-size: 18px;
+  margin: 0;
+}
+
+.settings-close {
+  border: none;
+  background: transparent;
+  color: #9ca3af;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 10px;
+  font-size: 13px;
+}
+
+.field span {
+  color: #9ca3af;
+}
+
+.field input {
+  border-radius: 8px;
+  border: 1px solid rgba(148, 163, 184, 0.7);
+  background: rgba(15, 23, 42, 0.9);
+  color: #e5e7eb;
+  padding: 6px 8px;
+  font-size: 14px;
+}
+
+.field input:focus {
+  outline: 1px solid #22d3ee;
+}
+
+.settings-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.btn-primary,
+.btn-secondary {
+  flex: 1;
+  border-radius: 999px;
+  padding: 6px 10px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.btn-primary {
+  background: #0ea5e9;
+  color: #0b1120;
+  border-color: #0ea5e9;
+}
+
+.btn-secondary {
+  background: transparent;
+  color: #e5e7eb;
+  border-color: rgba(148, 163, 184, 0.8);
+}
