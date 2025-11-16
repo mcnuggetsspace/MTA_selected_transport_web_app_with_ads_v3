@@ -1,0 +1,25 @@
+{
+  "name": "new_app",
+  "version": "1.0.0",
+  "description": "A single-page web app designed for landscape displays (such as TVs running Fully Kiosk Browser) that highlights the next arrivals for MTA NYC buses at stop 300432 while promoting a pizza menu with rotating media.",
+  "main": "server.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "keywords": [
+    "mta",
+    "bus",
+    "arrivals",
+    "display"
+  ],
+  "author": "",
+  "license": "ISC",
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "express": "^5.1.0",
+    "undici": "^7.16.0"
+  }
+}
