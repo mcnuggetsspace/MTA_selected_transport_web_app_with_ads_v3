@@ -285,10 +285,19 @@ async function fetchAndUpdateArrivals() {
     return;
   }
 
-  const url = new URL(config.workerUrl, window.location.origin);
-  url.searchParams.set("stopCode", config.stopId);
-  url.searchParams.set("maxVisits", config.maxArrivals);
-  // НЕ отправляем LineRef, MTA его ломает для некоторых остановок
+const url = new URL(config.workerUrl, window.location.origin);
+url.searchParams.set("stopCode", config.stopId);
+
+// сколько показать на маршрут (по-прежнему 3 по умолчанию)
+const perLine = Math.max(1, config.maxArrivals || defaultConfig.maxArrivals);
+
+// сколько записей запросить у MTA всего
+const MIN_VISITS = 15;        // минимум 15, как ты хочешь
+const LINES_BUDGET = 5;       // считаем, что максимум 5 маршрутов
+const maxVisitsToFetch = Math.max(perLine * LINES_BUDGET, MIN_VISITS);
+
+url.searchParams.set("maxVisits", maxVisitsToFetch);
+// НЕ отправляем LineRef, MTA его ломает для некоторых остановок
 
   try {
     const res = await fetch(url.toString(), { cache: "no-store" });
